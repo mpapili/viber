@@ -1,0 +1,44 @@
+from django.shortcuts import render
+from django.http import HttpResponse
+from .models import Album   #album object I made in models in music app
+### from django.template import loader
+from django.shortcuts import render, get_object_or_404 #turns loader responses to HttpResponses
+from django.http import Http404
+import os
+
+def index(request):
+    os.system("touch music_ran.mike")
+    all_albums = Album.objects.all()
+    context = {
+            'all_albums':all_albums,
+            }
+    return render(request, 'music/index.html', context)
+
+def detail(request, album_id):
+    os.system("touch music_details_ran.mike")
+    #try:
+    #    album = Album.objects.get(pk=album_id)  #passed in above remember
+    #except Album.DoesNotExist:  #you can do this for any object
+    #    raise Http404("Album doesn't exist you idiot")
+
+    album = get_object_or_404(Album, pk=album_id)
+    return render(request, 'music/detail.html', {'album' : album})
+    ### what's cool here is that instead of making "context" we just hand the context in directly as the third argument!
+
+def favorite(request, album_id):
+    album = get_object_or_404(Album, pk=album_id)   #album_id passed in
+    try:
+        selected_song = album.song_set.get(pk=request.POST['song'])
+    except (KeyError, Song.DoesNotExist):
+        return render(request, 'music/detail.html', {
+            'album' : album,
+            'error_message' : 'You did not select a valid song',
+            })
+    if selected_song.is_favorite:
+        selected_song.is_favorite = False
+    else:
+        selected_song.is_favorite = True
+    selected_song.save()
+    return render(request, 'music/detail.html', {'album' : album})
+
+# Create your views here.
